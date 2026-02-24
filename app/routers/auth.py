@@ -1,13 +1,11 @@
-from tokenize import Token
-
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import Annotated
 from sqlalchemy.orm import Session
 from starlette import status
 from fastapi.templating import Jinja2Templates
-from ..database import SessionLocal
-from ..models import User
+from app.database import SessionLocal
+from app.models import User
 from passlib.context import CryptContext
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -45,6 +43,7 @@ class CreateUserRequest(BaseModel):
     first_name: str
     last_name: str
     role: str
+    phone_number: str
 
 def create_access_token(username: str, user_id: int, role: str, expires_delta: timedelta):
     payload = {'sub': username, 'id': user_id, 'role': role}
@@ -69,6 +68,7 @@ async def create_user(db: db_dependency, create_user_request: CreateUserRequest)
         last_name=create_user_request.last_name,
         role=create_user_request.role,
         is_active = True,
+        phone_number = create_user_request.phone_number,
         hashed_password = bcrypt_context.hash(create_user_request.password)
     )
     db.add(user)

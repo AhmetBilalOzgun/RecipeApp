@@ -1,10 +1,10 @@
-from fastapi import APIRouter, Depends, Path, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, Path, HTTPException, Request
 from starlette import status
 from pydantic import BaseModel, Field
 from fastapi.templating import Jinja2Templates
-from ..models import Base, Todo
+from app.models import Recipe
 from sqlalchemy.orm import Session
-from ..database import engine, SessionLocal
+from app.database import SessionLocal
 from typing import Annotated
 from ..routers.auth import get_current_user
 from starlette.responses import RedirectResponse
@@ -12,18 +12,18 @@ from dotenv import load_dotenv
 import google.generativeai as genai
 import os
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage
 import markdown
 from bs4 import BeautifulSoup
 
 router = APIRouter(
-    prefix="/todo",
-    tags=["Todo"],
+    prefix="/recipe",
+    tags=["Recipe"],
 )
 
 templates = Jinja2Templates(directory="app/templates")
 
-class ToDoRequest(BaseModel):
+class RecipeRequest(BaseModel):
     title: str = Field(min_length=3,max_length=100)
     description: str = Field(min_length=3,max_length=100)
     priority: int = Field(gt=0,lt=6)
@@ -45,87 +45,87 @@ def redirect_to_login():
     redirect_response.delete_cookie("access_token")
     return redirect_response
 
-@router.get("/todo-page",status_code=status.HTTP_200_OK)
-async def render_todo_page(request: Request,db: db_dependency):
+@router.get("/recipe-page",status_code=status.HTTP_200_OK)
+async def render_recipe_page(request: Request,db: db_dependency):
     try:
         user = await get_current_user(request.cookies.get("access_token"))
         if user is None:
             return redirect_to_login()
-        todos= db.query(Todo).filter(Todo.user_id == user.get('id')).all()
+        recipes= db.query(Recipe).filter(Recipe.user_id == user.get('id')).all()
 
-        return templates.TemplateResponse("todo.html", {"request": request,"todos":todos,"user":user})
+        return templates.TemplateResponse("recipe.html", {"request": request,"todos":recipes,"user":user})
     except:
         return redirect_to_login()
-@router.get("/add-todo-page",status_code=status.HTTP_200_OK)
-async def render_add_todo_page(request: Request):
+@router.get("/add-recipe-page",status_code=status.HTTP_200_OK)
+async def render_add_recipe_page(request: Request):
     try:
         user = await get_current_user(request.cookies.get("access_token"))
         if user is None:
             return redirect_to_login()
-        return templates.TemplateResponse("add-todo.html", {"request": request,"user":user})
+        return templates.TemplateResponse("add-recipe.html", {"request": request,"user":user})
     except:
         return redirect_to_login()
 
-@router.get("/edit-todo-page/{todo_id}",status_code=status.HTTP_200_OK)
-async def render_edit_todo_page(request: Request,todo_id: int,db: db_dependency):
+@router.get("/edit-recipe-page/{todo_id}",status_code=status.HTTP_200_OK)
+async def render_edit_recipe_page(request: Request,recipe_id: int,db: db_dependency):
     try:
         user = await get_current_user(request.cookies.get("access_token"))
         if user is None:
             return redirect_to_login()
 
-        todo= db.query(Todo).filter(Todo.id == todo_id).first()
+        recipe= db.query(Recipe).filter(Recipe.id == recipe_id).first()
 
-        return templates.TemplateResponse("edit-todo.html", {"request": request,"todo":todo,"user":user})
+        return templates.TemplateResponse("edit-recipe.html", {"request": request,"todo":recipe,"user":user})
     except:
         return redirect_to_login()
 @router.get("/")
 async def get_all(user: user_dependency,db: db_dependency):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    return db.query(Todo).filter(Todo.user_id == user.get('id')).all()
+    return db.query(Recipe).filter(Recipe.user_id == user.get('id')).all()
 
-@router.get("/todo/{todo_id}",status_code=status.HTTP_200_OK)
-async def get_by_id(user:user_dependency, db: db_dependency,todo_id: int = Path(gt = 0)):
+@router.get("/recipe/{recipe_id}",status_code=status.HTTP_200_OK)
+async def get_by_id(user:user_dependency, db: db_dependency,recipe_id: int = Path(gt = 0)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    todo = db.query(Todo).filter(Todo.id == todo_id).filter(Todo.user_id == user.get('id')).first()
-    if todo is not None:
-        return todo
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id).filter(Recipe.user_id == user.get('id')).first()
+    if recipe is not None:
+        return recipe
     else:
         raise HTTPException(status_code=404, detail="Not Found")
 
-@router.post("/todo",status_code=status.HTTP_201_CREATED)
-async def create_todo(user:user_dependency,db:db_dependency,todo_request: ToDoRequest):
+@router.post("/recipe",status_code=status.HTTP_201_CREATED)
+async def create_recipe(user:user_dependency,db:db_dependency,recipe_request: RecipeRequest):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
 
-    todo = Todo(**todo_request.dict(), user_id = user.get('id'))
-    todo.description = create_todo_with_gemini(todo.description)
-    db.add(todo)
+    recipe = Recipe(**recipe_request.dict(), user_id = user.get('id'))
+    recipe.description = create_recipe_with_gemini(recipe.description)
+    db.add(recipe)
     db.commit()
 
-@router.put("/todo/{todo_id}",status_code=status.HTTP_204_NO_CONTENT)
-async def update_todo(user:user_dependency,db: db_dependency,todo_request:ToDoRequest,todo_id: int = Path(gt = 0)):
+@router.put("/recipe/{recipe_id}",status_code=status.HTTP_204_NO_CONTENT)
+async def update_todo(user:user_dependency,db: db_dependency,recipe_request:RecipeRequest,todo_id: int = Path(gt = 0)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    todo = db.query(Todo).filter(Todo.id == todo_id).filter(Todo.user_id == user.get('id')).first()
-    if todo is None:
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id).filter(Recipe.user_id == user.get('id')).first()
+    if recipe is None:
         raise HTTPException(status_code=404, detail="Not Found")
-    todo.title = todo_request.title
-    todo.description = create_todo_with_gemini(todo_request.description)
-    todo.priority = todo_request.priority
-    todo.completed = todo_request.completed
-    db.add(todo)
+    recipe.title = recipe_request.title
+    recipe.description = create_recipe_with_gemini(recipe_request.description)
+    recipe.priority = recipe_request.priority
+    recipe.completed = recipe_request.completed
+    db.add(recipe)
     db.commit()
 
-@router.delete("/todo/{todo_id}",status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/recipe/{recipe_id}",status_code=status.HTTP_204_NO_CONTENT)
 async def delete_todo(user: user_dependency,db: db_dependency,todo_id: int = Path(gt = 0)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
-    todo = db.query(Todo).filter(Todo.id == todo_id).filter(Todo.user_id == user.get('id')).first()
-    if todo is not None:
-        db.delete(todo)
+    recipe = db.query(Recipe).filter(Recipe.id == recipe_id).filter(Recipe.user_id == user.get('id')).first()
+    if recipe is not None:
+        db.delete(recipe)
         db.commit()
     else:
         raise HTTPException(status_code=404, detail="Not Found")
@@ -137,13 +137,13 @@ def markdown_to_text(markdown_text):
     return text
 
 
-def create_todo_with_gemini(todo_string: str):
+def create_todo_with_gemini(recipe_string: str):
     load_dotenv()
     genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
     llm = ChatGoogleGenerativeAI(model ="gemini-3-flash-preview")
     response= llm.invoke([
         HumanMessage(content="I will provide you a todo item to add my todo list.What i want you to do is create a longer and more comprehensive description of that todo item. my next message will be my todo"),
-        HumanMessage(content=todo_string),
+        HumanMessage(content=recipe_string),
     ])
     return markdown_to_text(str(response.content))
 

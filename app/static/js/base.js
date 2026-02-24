@@ -1,7 +1,7 @@
-    // Add Todo JS
-    const todoForm = document.getElementById('todoForm');
-    if (todoForm) {
-        todoForm.addEventListener('submit', async function (event) {
+    // Add Recipe JS
+    const recipeForm = document.getElementById('recipeForm');
+    if (recipeForm) {
+        recipeForm.addEventListener('submit', async function (event) {
             event.preventDefault();
 
             const form = event.target;
@@ -16,7 +16,7 @@
             };
 
             try {
-                const response = await fetch('/todo/todo', {
+                const response = await fetch('/recipe/recipe', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -39,16 +39,16 @@
         });
     }
 
-    // Edit Todo JS
-    const editTodoForm = document.getElementById('editTodoForm');
-    if (editTodoForm) {
-        editTodoForm.addEventListener('submit', async function (event) {
+    // Edit Recipe JS
+    const editRecipeForm = document.getElementById('editRecipeForm');
+    if (editRecipeForm) {
+        editRecipeForm.addEventListener('submit', async function (event) {
         event.preventDefault();
         const form = event.target;
         const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         var url = window.location.pathname;
-        const todoId = url.substring(url.lastIndexOf('/') + 1);
+        const recipeId = url.substring(url.lastIndexOf('/') + 1);
 
         const payload = {
             title: data.title,
@@ -64,9 +64,9 @@
                 throw new Error('Authentication token not found');
             }
 
-            console.log(`${todoId}`)
+            console.log(`${recipeId}`)
 
-            const response = await fetch(`/todo/todo/${todoId}`, {
+            const response = await fetch(`/recipe/recipe/${recipeId}`, {
                 method: 'PUT',
                 headers: {
                     'Content-Type': 'application/json',
@@ -76,7 +76,7 @@
             });
 
             if (response.ok) {
-                window.location.href = '/todo/todo-page'; // Redirect to the todo page
+                window.location.href = '/recipe/recipe-page'; // Redirect to the recipe page
             } else {
                 // Handle error
                 const errorData = await response.json();
@@ -90,7 +90,7 @@
 
         document.getElementById('deleteButton').addEventListener('click', async function () {
             var url = window.location.pathname;
-            const todoId = url.substring(url.lastIndexOf('/') + 1);
+            const recipeId = url.substring(url.lastIndexOf('/') + 1);
 
             try {
                 const token = getCookie('access_token');
@@ -98,7 +98,7 @@
                     throw new Error('Authentication token not found');
                 }
 
-                const response = await fetch(`/todo/todo/${todoId}`, {
+                const response = await fetch(`/recipe/recipe/${recipeId}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -107,7 +107,7 @@
 
                 if (response.ok) {
                     // Handle success
-                    window.location.href = '/todo/todo-page'; // Redirect to the todo page
+                    window.location.href = '/recipe/recipe-page'; // Redirect to the recipe page
                 } else {
                     // Handle error
                     const errorData = await response.json();
@@ -152,7 +152,7 @@
                     logout();
                     // Save token to cookie
                     document.cookie = `access_token=${data.access_token}; path=/`;
-                    window.location.href = '/todo/todo-page'; // Change this to your desired redirect page
+                    window.location.href = '/recipe/recipe-page'; // Change this to your desired redirect page
                 } else {
                     // Handle error
                     const errorData = await response.json();

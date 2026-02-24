@@ -1,8 +1,8 @@
 from .database import Base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 
-class Todo(Base):
-    __tablename__ = "todos"
+class Recipe(Base):
+    __tablename__ = "recipes"
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String)
     description = Column(String)
@@ -18,6 +18,7 @@ class User(Base):
     first_name = Column(String)
     last_name = Column(String)
     hashed_password = Column(String)
+    phone_number = Column(String)
     is_active = Column(Boolean,default=True)
     role = Column(String)
 
