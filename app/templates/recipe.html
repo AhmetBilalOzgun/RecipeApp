@@ -24,7 +24,7 @@
                 </thead>
                 <tbody>
                 {% for recipe in recipes %}
-                {% if recipe.complete == False %}
+                {% if recipe.completed == False %}
                 <tr class="pointer">
                     <td>{{loop.index}}</td>
                     <td>{{recipe.title}}</td>

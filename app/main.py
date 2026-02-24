@@ -6,7 +6,7 @@ from .models import Base
 
 from .database import engine
 from .routers.auth import router as auth_router
-from .routers.recipe import router as recipe_router
+from app.routers.recipe import router as recipe_router
 import os
 
 script_dir = os.path.dirname(__file__)

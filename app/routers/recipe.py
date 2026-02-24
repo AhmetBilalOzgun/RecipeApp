@@ -53,7 +53,7 @@ async def render_recipe_page(request: Request,db: db_dependency):
             return redirect_to_login()
         recipes= db.query(Recipe).filter(Recipe.user_id == user.get('id')).all()
 
-        return templates.TemplateResponse("recipe.html", {"request": request,"todos":recipes,"user":user})
+        return templates.TemplateResponse("recipe.html", {"request": request,"recipes":recipes,"user":user})
     except:
         return redirect_to_login()
 @router.get("/add-recipe-page",status_code=status.HTTP_200_OK)
@@ -66,7 +66,7 @@ async def render_add_recipe_page(request: Request):
     except:
         return redirect_to_login()
 
-@router.get("/edit-recipe-page/{todo_id}",status_code=status.HTTP_200_OK)
+@router.get("/edit-recipe-page/{recipe_id}",status_code=status.HTTP_200_OK)
 async def render_edit_recipe_page(request: Request,recipe_id: int,db: db_dependency):
     try:
         user = await get_current_user(request.cookies.get("access_token"))
@@ -75,7 +75,7 @@ async def render_edit_recipe_page(request: Request,recipe_id: int,db: db_depende
 
         recipe= db.query(Recipe).filter(Recipe.id == recipe_id).first()
 
-        return templates.TemplateResponse("edit-recipe.html", {"request": request,"todo":recipe,"user":user})
+        return templates.TemplateResponse("edit-recipe.html", {"request": request,"recipe":recipe,"user":user})
     except:
         return redirect_to_login()
 @router.get("/")
@@ -137,13 +137,24 @@ def markdown_to_text(markdown_text):
     return text
 
 
-def create_recipe_with_gemini(recipe_string: str,recipe_title: str):
+def create_recipe_with_gemini(recipe_string: str, recipe_title: str):
     load_dotenv()
     genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
-    llm = ChatGoogleGenerativeAI(model ="gemini-3-flash-preview")
-    response= llm.invoke([
-        HumanMessage(content="You are a world-class chef. I will provide you a recipe i want.What i want you to do is create a detailed recipe for my desired dish. my next message will be my desired dish and its title"),
-        HumanMessage(content=recipe_title+recipe_string),
+    llm = ChatGoogleGenerativeAI(model="gemini-3-flash-preview")
+    response = llm.invoke([
+        HumanMessage(
+            content="You are a world-class chef. I will provide you a recipe i want.What i want you to do is create a detailed recipe for my desired dish. my next message will be my desired dish and its title"),
+        HumanMessage(content=recipe_title + recipe_string),
     ])
-    return markdown_to_text(str(response.content))
+
+    # Gelen content bir liste ise (içinde type, text ve extras barındırıyorsa)
+    # Sadece 'text' tipinde olan blokları birleştir
+    if isinstance(response.content, list):
+        extracted_text = "".join(
+            [item.get("text", "") for item in response.content if isinstance(item, dict) and "text" in item])
+    else:
+        # Eğer zaten sadece string döndüyse olduğu gibi al
+        extracted_text = response.content
+
+    return markdown_to_text(extracted_text)
 
