@@ -101,26 +101,26 @@ async def create_recipe(user:user_dependency,db:db_dependency,recipe_request: Re
         raise HTTPException(status_code=404, detail="User not found")
 
     recipe = Recipe(**recipe_request.dict(), user_id = user.get('id'))
-    recipe.description = create_recipe_with_gemini(recipe.description)
+    recipe.description = create_recipe_with_gemini(recipe.description,recipe.title)
     db.add(recipe)
     db.commit()
 
 @router.put("/recipe/{recipe_id}",status_code=status.HTTP_204_NO_CONTENT)
-async def update_todo(user:user_dependency,db: db_dependency,recipe_request:RecipeRequest,todo_id: int = Path(gt = 0)):
+async def update_todo(user:user_dependency,db: db_dependency,recipe_request:RecipeRequest,recipe_id: int = Path(gt = 0)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     recipe = db.query(Recipe).filter(Recipe.id == recipe_id).filter(Recipe.user_id == user.get('id')).first()
     if recipe is None:
         raise HTTPException(status_code=404, detail="Not Found")
     recipe.title = recipe_request.title
-    recipe.description = create_recipe_with_gemini(recipe_request.description)
+    recipe.description = create_recipe_with_gemini(recipe_request.description,recipe_request.title)
     recipe.priority = recipe_request.priority
     recipe.completed = recipe_request.completed
     db.add(recipe)
     db.commit()
 
 @router.delete("/recipe/{recipe_id}",status_code=status.HTTP_204_NO_CONTENT)
-async def delete_todo(user: user_dependency,db: db_dependency,todo_id: int = Path(gt = 0)):
+async def delete_todo(user: user_dependency,db: db_dependency,recipe_id: int = Path(gt = 0)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     recipe = db.query(Recipe).filter(Recipe.id == recipe_id).filter(Recipe.user_id == user.get('id')).first()
@@ -137,13 +137,13 @@ def markdown_to_text(markdown_text):
     return text
 
 
-def create_todo_with_gemini(recipe_string: str):
+def create_recipe_with_gemini(recipe_string: str,recipe_title: str):
     load_dotenv()
     genai.configure(api_key=os.environ.get("GOOGLE_API_KEY"))
     llm = ChatGoogleGenerativeAI(model ="gemini-3-flash-preview")
     response= llm.invoke([
-        HumanMessage(content="I will provide you a todo item to add my todo list.What i want you to do is create a longer and more comprehensive description of that todo item. my next message will be my todo"),
-        HumanMessage(content=recipe_string),
+        HumanMessage(content="You are a world-class chef. I will provide you a recipe i want.What i want you to do is create a detailed recipe for my desired dish. my next message will be my desired dish and its title"),
+        HumanMessage(content=recipe_title+recipe_string),
     ])
     return markdown_to_text(str(response.content))
 
