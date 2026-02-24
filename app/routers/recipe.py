@@ -105,7 +105,7 @@ async def create_recipe(user:user_dependency,db:db_dependency,recipe_request: Re
     db.commit()
 
 @router.put("/recipe/{recipe_id}",status_code=status.HTTP_204_NO_CONTENT)
-async def update_todo(user:user_dependency,db: db_dependency,recipe_request:RecipeRequest,recipe_id: int = Path(gt = 0)):
+async def update_recipe(user:user_dependency,db: db_dependency,recipe_request:RecipeRequest,recipe_id: int = Path(gt = 0)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     recipe = db.query(Recipe).filter(Recipe.id == recipe_id).filter(Recipe.user_id == user.get('id')).first()
@@ -118,7 +118,7 @@ async def update_todo(user:user_dependency,db: db_dependency,recipe_request:Reci
     db.commit()
 
 @router.delete("/recipe/{recipe_id}",status_code=status.HTTP_204_NO_CONTENT)
-async def delete_todo(user: user_dependency,db: db_dependency,recipe_id: int = Path(gt = 0)):
+async def delete_recipe(user: user_dependency,db: db_dependency,recipe_id: int = Path(gt = 0)):
     if user is None:
         raise HTTPException(status_code=404, detail="User not found")
     recipe = db.query(Recipe).filter(Recipe.id == recipe_id).filter(Recipe.user_id == user.get('id')).first()
