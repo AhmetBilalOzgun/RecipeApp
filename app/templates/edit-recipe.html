@@ -15,16 +15,6 @@
           <label>Description</label>
           <textarea name="description" class="form-control" rows="3" required>{{recipe.description}}</textarea>
         </div>
-        <div class="form-group">
-          <label>Priority</label>
-          <select name="priority" class="form-control">
-            <option {% if recipe.priority == 1 %} selected="selected" {% endif %}>1</option>
-            <option {% if recipe.priority == 2 %} selected="selected" {% endif %}>2</option>
-            <option {% if recipe.priority == 3 %} selected="selected" {% endif %}>3</option>
-            <option {% if recipe.priority == 4 %} selected="selected" {% endif %}>4</option>
-            <option {% if recipe.priority == 5 %} selected="selected" {% endif %}>5</option>
-          </select>
-        </div>
         <div class="form-group form-check">
           <input type="checkbox" class="form-check-input" name="complete" {% if recipe.complete %} checked {% endif %}>
           <label class="form-check-label">Complete</label>

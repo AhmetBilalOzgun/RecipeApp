@@ -15,16 +15,6 @@
           <label>Description</label>
           <textarea class="form-control" rows="3" name="description" required></textarea>
         </div>
-        <div class="form-group">
-          <label>Priority</label>
-          <select class="form-control" name="priority">
-            <option>1</option>
-            <option>2</option>
-            <option>3</option>
-            <option>4</option>
-            <option>5</option>
-          </select>
-        </div>
         <button type="submit" class="btn btn-primary"> Add new recipe </button>
         <a href="/recipe/recipe-page" class="btn btn-success">Back</a>
       </form>
@@ -52,7 +42,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = {
                 title: formData.get("title"),
                 description: formData.get("description"),
-                priority: parseInt(formData.get("priority")),
                 completed: false
             };
 

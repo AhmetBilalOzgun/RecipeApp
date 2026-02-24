@@ -11,7 +11,6 @@
             const payload = {
                 title: data.title,
                 description: data.description,
-                priority: parseInt(data.priority),
                 complete: false
             };
 
@@ -53,7 +52,6 @@
         const payload = {
             title: data.title,
             description: data.description,
-            priority: parseInt(data.priority),
             complete: data.complete === "on"
         };
 

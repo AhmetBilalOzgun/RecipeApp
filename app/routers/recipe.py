@@ -26,7 +26,6 @@ templates = Jinja2Templates(directory="app/templates")
 class RecipeRequest(BaseModel):
     title: str = Field(min_length=3,max_length=100)
     description: str = Field(min_length=3,max_length=100)
-    priority: int = Field(gt=0,lt=6)
     completed: bool = Field(default=False)
 
 
@@ -113,8 +112,7 @@ async def update_todo(user:user_dependency,db: db_dependency,recipe_request:Reci
     if recipe is None:
         raise HTTPException(status_code=404, detail="Not Found")
     recipe.title = recipe_request.title
-    recipe.description = create_recipe_with_gemini(recipe_request.description,recipe_request.title)
-    recipe.priority = recipe_request.priority
+    recipe.description = recipe_request.description
     recipe.completed = recipe_request.completed
     db.add(recipe)
     db.commit()
